@@ -1,0 +1,343 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+double f1(double vx);
+double f2(double vy);
+double f3(double M, double x, double y);
+double f4(double M, double x, double y);
+//Decleration of the function used, and the variables within them
+
+int main()
+
+{
+    double vx, vy, x, y, M, MM, h, t, r, GM, theta, v, tlimit, pi, ap, pe, ecc, sma, KE, PE, TE, ax;
+    pi=3.14159265359;
+    double k1x, k1y, k1vx, k1vy;
+    double k2x, k2y, k2vx, k2vy;
+    double k3x, k3y, k3vx, k3vy;
+    double k4x, k4y, k4vx, k4vy;
+    double xsum, ysum, vxsum, vysum, tsum;
+    int k;
+    //Here I define all the variables required in the code
+
+
+    FILE *ORBIT;
+    ORBIT = fopen("ORBIT", "w");
+    //Opening the file in which data will be printed too
+
+    printf("              --MODELLING THE ORBIT OF A BODY WITHIN SPACE--\n");
+
+    printf("\nPlease enter the mass of the body you would like to send into orbit:\t");
+    scanf("%lf", &MM);
+
+    printf("\nPlease enter the mass of the body you would to centre the orbit:\t");
+    scanf("%lf", &M);
+
+    printf("\nTo model a stable circular orbit enter '1'\nTo model eccentric orbit enter '2'\nTo model a general orbit enter '3'\n");
+    scanf("%d", &k);
+    //The user decided some parameters within the model and which orbit they would like to model
+
+    t=0.00;
+
+    r=sqrt(pow(x,2)+pow(y,2));
+    //radius function
+    GM = (6.67408)*(pow(10,-11))*M;
+    //This simplifies lines of code with calculation
+    v = sqrt(GM/r);
+    //velocity function
+
+    switch(k)
+    //Depending the user input this switches to a desired case
+    {
+
+
+    case 1:
+
+    if(ORBIT !=NULL){
+    //This ensures the file can be printed too
+    printf("Please choose an initial x-coordinate:\t");
+    scanf("%lf", &x);
+    printf("\nPlease choose an initial y-coordinate:\t");
+    scanf("%lf", &y);
+    //Initialising the position at which the orbit begins
+
+    r=sqrt(pow(x,2)+pow(y,2));
+
+    printf("\nEnter the time interval");
+    scanf("%lf", &h);
+
+    v = sqrt(GM/r);
+    //Redefining these variables within the respective case
+
+    theta = atan((y/x));
+    vx = -(v*sin(theta));
+    vy = v*cos(theta);
+    ax = (pow(x,3))/(GM);
+    //This trigonometry allows for the use of the stable orbit equation which dictates initial velocities from initial positions
+
+    tlimit = 100*(2*pi*pow(ax,0.5));
+    //A time limit derived through the stable orbit equation
+
+    while (t<=tlimit)
+    //We iterate over the time limit
+
+{
+    r=sqrt(pow(x,2)+pow(y,2));
+    v = sqrt(GM/r);
+    //redefining the variables within the loop such that the values change
+    KE = 0.5*MM*(pow(v,2));
+    PE = (-GM*MM)/r;
+    TE = PE + KE;
+    //Energy calculation
+
+    k1x = f1(vx);
+    k1y = f2(vy);
+    k1vx = f3(M, x, y);
+    k1vy = f4(M, x, y);
+
+    k2x =  f1(vx+((h*k1vx)/2));
+    k2y =  f2(vy+((h*k1vy)/2));
+    k2vx =  f3(M, (x+((h*k1x)/2)),((y+((h*k1y)/2))));
+    k2vy =  f4(M, (x+((h*k1x)/2)),((y+((h*k1y)/2))));
+
+    k3x =  f1(vx+((h*k2vx)/2));
+    k3y =  f2(vy+((h*k2vy)/2));
+    k3vx =  f3(M, (x+((h*k2x)/2)),((y+((h*k2y)/2))));
+    k3vy =  f4(M, (x+((h*k2x)/2)),((y+((h*k2y)/2))));
+
+    k4x = f1(vx + (h*k3vx));
+    k4y = f2(vy + (h*k3vy));
+    k4vx = f3(M, (x + (h*k3x)), (y + (h*k3y)));
+    k4vy = f4(M, (x + (h*k3x)), (y + (h*k3y)));
+    //The Runge Kutta function which produces the iterative values of velocity and position
+
+    x = x+(h/6)*(k1x+2*k2x+2*k3x+k4x);
+    y = y+(h/6)*(k1y+2*k2y+2*k3y+k4y);
+    vx = vx+(h/6)*(k1vx+2*k2vx+2*k3vx+k4vx);
+    vy = vy+(h/6)*(k1vy+2*k2vy+2*k3vy+k4vy);
+    //Defining new values for next iteration
+
+
+    //To view energies we enter the line 'printf(" KE: %lf  PE: %lf   TE: %lf\n", KE, PE, TE);'
+
+    fprintf( ORBIT, "%.2lf\t%lf\t%lf\n", t, x, y);
+    //print to file the desired data
+
+    t = t+h;
+
+if (r<5371000)
+{
+    break;
+    //The orbit is unsuccessful and has most likely crashed, this statement should not appear as we have modelled a stable orbit
+    //It simply acts as a safety net
+}
+
+}
+
+    printf("\nThe stable circular orbit has been successfully modelled and completed after %lf seconds\n\n", t);
+    printf("Open the 'ORBIT' File for details of the orbit.");
+    //Notify the user the success of the code and indicates where to find the data
+    break;
+    }
+    else
+    {
+        printf("The file could not be opened");
+        break;
+    }
+    //This tells the user that the file could not be printed too.
+
+    case 2:
+    if(ORBIT !=NULL){
+    printf("\nEnter the time interval\t");
+    scanf("%lf", &h);
+
+    printf("\nPlease enter the farthest distance you would\nlike the orbit path to be from earth\t");
+    scanf("%lf", &ap);
+    printf("\nPlease enter the shortest distance you would\nlike the orbit path to be from earth\t");
+    scanf("%lf", &pe);
+    //These new conditions are to set the parameters of an eccentric orbit
+
+    ecc = ((ap - pe)/(ap + pe));
+
+    sma = ap/(1+ecc);
+    //Using the determined apogee and perigee we calculate eccentricity and the semi major axis
+
+    v = sqrt(GM*((2/pe)-(1/sma)));
+
+    vx = 0;
+    //This condition is required to simulate an eccentric orbit
+    vy = v;
+    //All of the velocity is going in the y-direction, this simplifies the model
+
+    tlimit = 2*pi*sqrt((pow(sma,3))/GM);
+    //Again we introduce the time limit
+    y=0;
+
+    x=pe;
+    //x is initialised as the perigee of the orbit
+
+    while (t<=tlimit)
+
+{
+
+    r=sqrt(pow(x,2)+pow(y,2));
+
+    v = sqrt(GM/r);
+    KE = 0.5*MM*(pow(v,2));
+    PE = (-GM*MM)/r;
+    TE = PE + KE;
+
+    k1x = f1(vx);
+    k1y = f2(vy);
+    k1vx = f3(M, x, y);
+    k1vy = f4(M, x, y);
+
+    k2x =  f1(vx+((h*k1vx)/2));
+    k2y =  f2(vy+((h*k1vy)/2));
+    k2vx =  f3(M, (x+((h*k1x)/2)),((y+((h*k1y)/2))));
+    k2vy =  f4(M, (x+((h*k1x)/2)),((y+((h*k1y)/2))));
+
+    k3x =  f1(vx+((h*k2vx)/2));
+    k3y =  f2(vy+((h*k2vy)/2));
+    k3vx =  f3(M, (x+((h*k2x)/2)),((y+((h*k2y)/2))));
+    k3vy =  f4(M, (x+((h*k2x)/2)),((y+((h*k2y)/2))));
+
+    k4x = f1(vx + (h*k3vx));
+    k4y = f2(vy + (h*k3vy));
+    k4vx = f3(M, (x + (h*k3x)), (y + (h*k3y)));
+    k4vy = f4(M, (x + (h*k3x)), (y + (h*k3y)));
+
+    x = x+(h/6)*(k1x+2*k2x+2*k3x+k4x);
+    y = y+(h/6)*(k1y+2*k2y+2*k3y+k4y);
+    vx = vx+(h/6)*(k1vx+2*k2vx+2*k3vx+k4vx);
+    vy = vy+(h/6)*(k1vy+2*k2vy+2*k3vy+k4vy);
+
+    fprintf( ORBIT, "%.2lf\t%lf\t%lf\n", t, x, y);
+
+    t = t+h;
+
+}
+    printf("The eccentric orbit has been successfully modelled and completed after %lf seconds\n\n", t);
+    printf("Open the 'ORBIT' File for details of the orbit.");
+
+    break;
+    }
+    else{
+            printf("The file could not be opened");
+            break;
+    }
+
+    case 3:
+
+    if(ORBIT !=NULL){
+    printf("Please choose an initial x-coordinate:\t");
+    scanf("%lf", &x);
+    printf("\nPlease choose an initial y-coordinate:\t");
+    scanf("%lf", &y);
+
+    printf("\nPlease enter an initial velocity in direction x:\t");
+    scanf("%lf", &vx);
+    printf("\nPlease enter an initial velocity in direction y:\t");
+    scanf("%lf", &vy);
+    printf("\nPlease enter a time interval\t");
+    scanf("%lf", &h);
+
+
+        while (t<=1000000000000000)
+        //An arbritrary time limit for an arbrtirary orbit
+
+{
+    r=sqrt(pow(x,2)+pow(y,2));
+    v = sqrt(GM/r);
+    KE = 0.5*MM*(pow(v,2));
+    PE = (-GM*MM)/r;
+    TE = PE + KE;
+
+    k1x = f1(vx);
+    k1y = f2(vy);
+    k1vx = f3(M, x, y);
+    k1vy = f4(M, x, y);
+
+
+    k2x =  f1(vx+((h*k1vx)/2));
+    k2y =  f2(vy+((h*k1vy)/2));
+    k2vx =  f3(M, (x+((h*k1x)/2)),((y+((h*k1y)/2))));
+    k2vy =  f4(M, (x+((h*k1x)/2)),((y+((h*k1y)/2))));
+
+
+    k3x =  f1(vx+((h*k2vx)/2));
+    k3y =  f2(vy+((h*k2vy)/2));
+    k3vx =  f3(M, (x+((h*k2x)/2)),((y+((h*k2y)/2))));
+    k3vy =  f4(M, (x+((h*k2x)/2)),((y+((h*k2y)/2))));
+
+    k4x = f1(vx + (h*k3vx));
+    k4y = f2(vy + (h*k3vy));
+    k4vx = f3(M, (x + (h*k3x)), (y + (h*k3y)));
+    k4vy = f4(M, (x + (h*k3x)), (y + (h*k3y)));
+
+    x = x+(h/6)*(k1x+2*k2x+2*k3x+k4x);
+    y = y+(h/6)*(k1y+2*k2y+2*k3y+k4y);
+    vx = vx+(h/6)*(k1vx+2*k2vx+2*k3vx+k4vx);
+    vy = vy+(h/6)*(k1vy+2*k2vy+2*k3vy+k4vy);
+
+    fprintf( ORBIT, "%.2lf\t%lf\t%lf\n", t, x, y);
+
+    t = t+h;
+
+
+if(r<=1731000)
+{
+    printf("\nAfter %lf seconds of orbiting the body has most likely crashed.\nOrbit details have been printed to 'Orbit' File",t);
+    break;
+    //Because the orbit is arbritrary we assume at this radius the body has crashed
+}
+
+if(r>=100000000000)
+{
+    printf("\nAfter %lf seconds of orbiting the body has most likely left the orbit of the central body.\n\nOrbit details have been printed to 'Orbit' File",t);
+    break;
+}
+
+}
+
+printf("\nThe initial conditions have produced a successful, stable orbit.");
+
+break;
+    }
+    else{
+            printf("The file could not be opened");
+            break;
+    }
+
+    }
+
+
+fclose(ORBIT);
+    return 0;
+
+}
+
+
+double f1(double vx)
+{
+    return vx;
+}
+double f2(double vy)
+{
+    return vy;
+}
+double f3(double M, double x, double y)
+{
+    return ((-(6.67408*pow(10,-11))*M*x)/pow(((pow(x,2)+pow(y,2))),1.5));
+}
+double f4(double M, double x, double y)
+{
+    return ((-(6.67408 * pow(10,-11))*M*y)/pow(((pow(x,2)+pow(y,2))),1.5));
+}
+
+//Redefining the functions outside int{main}
+
+
+
+
